@@ -15,8 +15,8 @@ One idea into a script somebody finishes.
 Two tools live in this folder and both actually run. Use them. Do not eyeball the hook.
 
 ```bash
-python3 hookscore.py hooks.txt              # rank your hook options
-python3 hookscore.py --hook "one line"      # score a single one
+python3 skills/yt-script/hookscore.py hooks.txt              # rank your hook options
+python3 skills/yt-script/hookscore.py --hook "one line"      # score a single one
 ```
 
 ## Before you write

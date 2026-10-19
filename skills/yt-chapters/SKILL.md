@@ -9,7 +9,7 @@ description: >-
 # yt-chapters
 
 ```bash
-python3 chapters.py transcript.srt --target 8
+python3 skills/yt-chapters/chapters.py transcript.srt --target 8
 ```
 
 ## The rules, which are not optional

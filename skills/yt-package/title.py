@@ -64,10 +64,24 @@ def show(r):
 
 def main():
     a = sys.argv[1:]
+    if "-h" in a or "--help" in a:
+        print(__doc__ or "Ajuda não disponível.")
+        return
     as_json = "--json" in a; a = [x for x in a if x != "--json"]
-    thumb = a[a.index("--thumb") + 1] if "--thumb" in a else None
+    thumb = None
+    if "--thumb" in a:
+        i = a.index("--thumb")
+        if i + 1 >= len(a) or a[i + 1].startswith("--"):
+            print("Erro: --thumb exige um texto.", file=sys.stderr)
+            sys.exit(2)
+        thumb = a[i + 1]
+
     if "--title" in a:
-        rows = [check(a[a.index("--title") + 1], thumb)]
+        i = a.index("--title")
+        if i + 1 >= len(a) or a[i + 1].startswith("--"):
+            print("Erro: --title exige um texto.", file=sys.stderr)
+            sys.exit(2)
+        rows = [check(a[i + 1], thumb)]
     elif a and os.path.exists(a[0]):
         rows = [check(l, thumb) for l in open(a[0]).read().splitlines() if l.strip()]
     else:

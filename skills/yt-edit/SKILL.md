@@ -12,8 +12,8 @@ description: >-
 An edit decision list from a timestamped transcript. It prints the cuts. You apply them.
 
 ```bash
-python3 deadair.py transcript.srt              # srt, vtt or whisper json
-python3 deadair.py transcript.srt --floor 0.35 --json
+python3 skills/yt-edit/deadair.py transcript.srt              # srt, vtt or whisper json
+python3 skills/yt-edit/deadair.py transcript.srt --floor 0.35 --json
 ```
 
 No transcript yet? Ask for one, or produce one first - `whisper`, `faster-whisper`, or the caption

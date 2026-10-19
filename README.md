@@ -13,23 +13,22 @@ channel, not by how big the channel is.
 
 **Nothing gets published until you do it.** These skills write. You upload.
 
-## Install
+## Install and run locally
 
-Paste this link into ChatGPT and say **install skill**:
+This repository contains eleven skill instruction folders and six standalone Python scripts.
+Cloning the repository does not, by itself, install these skills into the ChatGPT Android app
+or give ChatGPT access to files stored in Termux.
 
-```
-https://github.com/Jakeschincariol/chatgpt-youtube-agent-skill
-```
-
-Or do it yourself:
+To obtain the project and run its tests locally:
 
 ```bash
-git clone https://github.com/Jakeschincariol/chatgpt-youtube-agent-skill
-cp -r chatgpt-youtube-agent-skill/skills/yt-* ~/.codex/skills/
+git clone https://github.com/adrianopoggianella-sketch/chatgpt-youtube-agent-skill.git
+cd chatgpt-youtube-agent-skill
+python3 -m unittest discover -s tests -v
 ```
 
-Restart the app and the skills are available. Project-local instead of global: copy the same
-folders into your repo's `.codex/skills/`.
+If you already cloned the repository, run commands from its existing directory instead of
+cloning again. The Python scripts can be run directly with Python 3; see the usage examples below.
 
 ## The eleven
 
@@ -47,10 +46,53 @@ folders into your repo's `.codex/skills/`.
 | `yt-shorts` | finds the Shorts hiding in a long video |
 | `yt-audit` | reads a channel and says what is actually wrong |
 
+## Script usage
+
+Run these commands from the repository root with Python 3.
+
+### Audience retention
+
+```bash
+python3 skills/yt-retention/retention.py retention.csv
+python3 skills/yt-retention/retention.py retention.csv --json
+python3 skills/yt-retention/retention.py retention.csv --axis seconds
+python3 skills/yt-retention/retention.py retention.csv --axis percent --duration 600
+python3 skills/yt-retention/retention.py retention.csv --transcript transcript.srt
+```
+
+Use `--axis auto`, `--axis percent`, or `--axis seconds` to select the time axis. `--duration` supplies video duration and `--transcript` associates transcript text with retention drops.
+
+### Edit decision list
+
+```bash
+python3 skills/yt-edit/deadair.py transcript.srt
+python3 skills/yt-edit/deadair.py transcript.srt --floor 0.35 --json
+```
+
+Accepts SRT/VTT transcripts and Whisper JSON. The default minimum gap is 0.45 seconds. The script suggests cuts; it does not edit video files.
+
+### YouTube chapters
+
+```bash
+python3 skills/yt-chapters/chapters.py transcript.srt
+python3 skills/yt-chapters/chapters.py transcript.srt --target 8 --json
+```
+
+Accepts SRT/VTT transcripts and Whisper JSON. The generated list must start at `00:00`, contain at least three chapters, and give each chapter at least 10 seconds. Review the draft titles before publishing.
+
 ## Your voice
 
-Copy `templates/voice.md` to `~/.codex/youtube/voice.md` and fill it in. Every skill reads it.
-Or send ChatGPT three of your own videos and say "write my voice profile from these".
+`templates/voice.md` is a template for a personal channel voice profile. For a compatible local
+agent that can read your filesystem, copy and complete it with:
+
+```bash
+mkdir -p ~/.codex/youtube
+cp templates/voice.md ~/.codex/youtube/voice.md
+```
+
+Only skills whose instructions explicitly reference this profile are configured to use it.
+ChatGPT on Android does not automatically read files from Termux. When working in ChatGPT,
+provide the relevant voice-profile text in the conversation or attach the file when supported.
 
 ## The tools
 

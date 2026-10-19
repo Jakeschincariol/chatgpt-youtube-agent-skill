@@ -12,8 +12,8 @@ description: >-
 The retention graph is the only honest feedback YouTube gives you. Almost nobody exports it.
 
 ```bash
-python3 retention.py retention.csv --duration 600
-python3 retention.py retention.csv --transcript transcript.srt
+python3 skills/yt-retention/retention.py retention.csv --duration 600
+python3 skills/yt-retention/retention.py retention.csv --transcript transcript.srt
 ```
 
 Getting the file: Studio -> a video -> Analytics -> Engagement -> the audience-retention chart ->

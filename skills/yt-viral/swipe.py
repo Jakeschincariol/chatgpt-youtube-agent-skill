@@ -31,8 +31,24 @@ def classify(title):
 
 def main():
     a = sys.argv[1:]
+    if "-h" in a or "--help" in a:
+        print(__doc__ or "Ajuda não disponível.")
+        return
     as_json = "--json" in a; a = [x for x in a if x != "--json"]
-    lo = float(a[a.index("--min") + 1]) if "--min" in a else 1.5
+    lo = 1.5
+    if "--min" in a:
+        i = a.index("--min")
+        if i + 1 >= len(a) or a[i + 1].startswith("--"):
+            print("Erro: --min exige um número finito não negativo.", file=sys.stderr)
+            sys.exit(2)
+        try:
+            lo = float(a[i + 1])
+        except ValueError:
+            print("Erro: --min exige um número finito não negativo.", file=sys.stderr)
+            sys.exit(2)
+        if not (0 <= lo < float("inf")):
+            print("Erro: --min exige um número finito não negativo.", file=sys.stderr)
+            sys.exit(2)
     files = [x for x in a if not x.startswith("--") and not re.match(r"^[\d.]+$", x)]
     if not files or not os.path.exists(files[0]): print(__doc__); sys.exit(1)
     rows = json.load(open(files[0]))

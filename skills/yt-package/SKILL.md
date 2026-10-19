@@ -13,8 +13,8 @@ The title and the thumbnail are ONE unit. Writing them separately is why most pa
 thumbnail repeats the title, and half the click surface says the same thing twice.
 
 ```bash
-python3 title.py --title "..." --thumb "AI RAN IT"
-python3 title.py titles.txt            # one per line, ranked
+python3 skills/yt-package/title.py --title "..." --thumb "AI RAN IT"
+python3 skills/yt-package/title.py titles.txt            # one per line, ranked
 ```
 
 ## Before you write

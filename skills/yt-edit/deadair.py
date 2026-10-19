@@ -22,11 +22,41 @@ def parse_ts(s):
     p = s.split(":")
     return int(p[0]) * 3600 + int(p[1]) * 60 + float(p[2]) if len(p) == 3 else int(p[0]) * 60 + float(p[1])
 
+def total_removed(cuts):
+    intervals = sorted(
+        (float(c["start"]), float(c["end"]))
+        for c in cuts
+        if float(c["end"]) > float(c["start"])
+    )
+    if not intervals:
+        return 0.0
+
+    total = 0.0
+    start, end = intervals[0]
+
+    for next_start, next_end in intervals[1:]:
+        if next_start <= end:
+            end = max(end, next_end)
+        else:
+            total += end - start
+            start, end = next_start, next_end
+
+    return total + end - start
+
+
 def load(path):
-    raw = open(path, encoding="utf-8", errors="replace").read()
+    with open(path, encoding="utf-8", errors="replace") as f:
+        raw = f.read()
     if path.endswith(".json"):
         d = json.loads(raw)
-        segs = d.get("segments", d if isinstance(d, list) else [])
+        if isinstance(d, dict):
+            segs = d.get("segments", [])
+        elif isinstance(d, list):
+            segs = d
+        else:
+            raise ValueError("O JSON deve conter uma lista de segmentos ou um objeto com a chave 'segments'.")
+        if not isinstance(segs, list):
+            raise ValueError("A chave 'segments' deve conter uma lista.")
         return [(float(s["start"]), float(s["end"]), (s.get("text") or "").strip()) for s in segs]
     cues, cur = [], None
     for line in raw.splitlines():
@@ -42,11 +72,25 @@ def norm(t): return re.sub(r"[^a-z ]", "", t.lower()).split()
 
 def main():
     a = sys.argv[1:]
+    if "-h" in a or "--help" in a:
+        print(__doc__ or "Ajuda não disponível.")
+        return
     as_json = "--json" in a; a = [x for x in a if x != "--json"]
-    floor = float(a[a.index("--floor") + 1]) if "--floor" in a else 0.45
+    floor = 0.45
+    if "--floor" in a:
+        i = a.index("--floor")
+        if i + 1 >= len(a) or a[i + 1].startswith("--"):
+            print("Erro: --floor exige um valor numérico positivo.", file=sys.stderr); sys.exit(2)
+        try: floor = float(a[i + 1])
+        except ValueError: print("Erro: --floor deve ser um número positivo e finito.", file=sys.stderr); sys.exit(2)
+        if not (0 < floor < float("inf")): print("Erro: --floor deve ser um número positivo e finito.", file=sys.stderr); sys.exit(2)
     a = [x for x in a if not x.startswith("--") and not re.match(r"^[\d.]+$", x)]
     if not a or not os.path.exists(a[0]): print(__doc__); sys.exit(1)
-    cues = load(a[0])
+    try:
+        cues = load(a[0])
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        print(f"Erro: não foi possível ler a transcrição: {exc}", file=sys.stderr)
+        sys.exit(2)
     if not cues: print("no cues found - is this an srt, vtt or whisper json?"); sys.exit(1)
     dur = cues[-1][1]
     cuts = []
@@ -72,7 +116,7 @@ def main():
                                  "why": f'restart of "{" ".join(a1)}"'})
     cuts = [c for c in cuts if c["end"] > c["start"]]
     cuts.sort(key=lambda c: c["start"])
-    removed = sum(c["end"] - c["start"] for c in cuts)
+    removed = total_removed(cuts)
     if as_json:
         print(json.dumps({"source": a[0], "duration": dur, "cuts": cuts,
                           "removed": round(removed, 3), "out": round(dur - removed, 3)}, indent=1)); return

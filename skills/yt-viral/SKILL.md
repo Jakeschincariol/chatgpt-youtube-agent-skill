@@ -13,7 +13,7 @@ Raw view counts rank channel size, not ideas. This ranks by **multiple over each
 median**, which is the only version of the question that is about the video.
 
 ```bash
-python3 swipe.py collected.json --min 2.0
+python3 skills/yt-viral/swipe.py collected.json --min 2.0
 ```
 
 ## Collecting the input

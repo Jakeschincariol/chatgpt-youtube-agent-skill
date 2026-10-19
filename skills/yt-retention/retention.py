@@ -19,6 +19,16 @@ report you can act on without scrubbing the video yourself.
 """
 import csv, json, os, re, sys
 
+def is_percent_axis(xs, axis="auto"):
+    if axis == "percent":
+        return True
+    if axis == "seconds":
+        return False
+    if axis == "auto":
+        return max(xs) <= 100.5
+    raise ValueError("Eixo inválido. Use --axis auto, --axis percent ou --axis seconds.")
+
+
 def load_csv(path):
     rows = []
     with open(path, newline="", encoding="utf-8-sig", errors="replace") as fh:
@@ -34,21 +44,71 @@ def load_csv(path):
 
 def main():
     a = sys.argv[1:]
-    as_json = "--json" in a; a = [x for x in a if x != "--json"]
-    tr = a[a.index("--transcript") + 1] if "--transcript" in a else None
-    files = [x for x in a if not x.startswith("--") and x != tr]
+    if "-h" in a or "--help" in a:
+        print(__doc__ or "Ajuda não disponível.")
+        return
+    as_json = False
+    tr = None
+    axis = "auto"
+    duration_value = None
+    files = []
+
+    i = 0
+    while i < len(a):
+        arg = a[i]
+
+        if arg == "--json":
+            as_json = True
+            i += 1
+        elif arg in ("--axis", "--duration", "--transcript"):
+            option = arg
+            if i + 1 >= len(a) or a[i + 1].startswith("--"):
+                print(f"Erro: {option} exige um valor.")
+                sys.exit(2)
+
+            value = a[i + 1]
+            if option == "--axis":
+                axis = value
+            elif option == "--duration":
+                duration_value = value
+            else:
+                tr = value
+            i += 2
+        elif arg.startswith("--"):
+            print(f"Erro: opção desconhecida: {arg}")
+            sys.exit(2)
+        else:
+            files.append(arg)
+            i += 1
+
+    if axis not in ("auto", "percent", "seconds"):
+        print("Erro: --axis aceita apenas auto, percent ou seconds.")
+        sys.exit(2)
+
+    try:
+        dur = float(duration_value) if duration_value is not None else None
+    except ValueError:
+        print("Erro: --duration deve ser um número positivo.")
+        sys.exit(2)
+
+    if dur is not None and not (dur > 0 and dur < float("inf")):
+        print("Erro: --duration deve ser um número positivo e finito.")
+        sys.exit(2)
+
     if not files or not os.path.exists(files[0]): print(__doc__); sys.exit(1)
     rows = load_csv(files[0])
     if len(rows) < 8: print("could not read at least 8 data points from that csv"); sys.exit(1)
     xs = [r[0] for r in rows]; ys = [r[1] for r in rows]
-    pct_axis = max(xs) <= 100.5
-    dur = None
-    if "--duration" in a: dur = float(a[a.index("--duration") + 1])
+    try:
+        pct_axis = is_percent_axis(xs, axis)
+    except ValueError as exc:
+        print(str(exc))
+        sys.exit(2)
     def at(x): return (x / 100.0 * dur) if (pct_axis and dur) else x
     start = ys[0] or 100.0
     # HOOK: the first 30 seconds, or the first 10% when the axis is a percentage and we have no duration
     cutoff = 30.0 if not pct_axis else (30.0 / dur * 100 if dur else 10.0)
-    hook_end = min((y for x, y in rows if x <= cutoff), default=start)
+    hook_end = next((y for x, y in reversed(rows) if x <= cutoff), start)
     hook_leak = start - hook_end
     drops = []
     for i in range(1, len(rows)):
